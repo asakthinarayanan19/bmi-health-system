@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Body Composition System - Portal Login</title>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Animated Gradient Spheres -->
+  <div class="gradient-bg">
+    <div class="gradient-sphere-1"></div>
+    <div class="gradient-sphere-2"></div>
+    <div class="gradient-sphere-3"></div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="auth-container">
+    <div class="auth-box glass-card">
+      
+      <!-- Brand Header -->
+      <div class="brand-header">
+        <i class="fa-solid fa-child-reaching"></i>
+        <h1>HEALTH TWIN</h1>
+        <p>Smart Body Composition & Nutrition Engine</p>
+      </div>
+
+      <!-- Login View -->
+      <div id="login-view">
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <div class="input-container">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="login-email" class="form-input" placeholder="name@domain.com" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <div class="input-container">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <span>Access Dashboard</span>
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          </button>
+        </form>
+
+        <div class="auth-links">
+          <a href="#" id="go-register">Create an Account</a>
+          <a href="#" id="go-forgot">Forgot Password?</a>
+        </div>
+      </div>
+
+      <!-- Register View -->
+      <div id="register-view" style="display: none;">
+        <form id="register-form">
+          <div class="form-group">
+            <label for="reg-name">Full Name</label>
+            <div class="input-container">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" id="reg-name" class="form-input" placeholder="John Doe" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email">Email Address</label>
+            <div class="input-container">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="reg-email" class="form-input" placeholder="name@domain.com" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <div class="input-container">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="reg-password" class="form-input" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <span>Register Free</span>
+            <i class="fa-solid fa-user-plus"></i>
+          </button>
+        </form>
+
+        <div class="auth-links">
+          <a href="#" id="reg-go-login">Back to Login</a>
+        </div>
+      </div>
+
+      <!-- Forgot Password View -->
+      <div id="forgot-view" style="display: none;">
+        <form id="forgot-form">
+          <div class="form-group">
+            <label for="forgot-email">Email Address</label>
+            <div class="input-container">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="forgot-email" class="form-input" placeholder="name@domain.com" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <span>Send Reset Code</span>
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+
+        <div class="auth-links">
+          <a href="#" id="forgot-go-login">Back to Login</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Notification Banner -->
+  <div id="alert-container"></div>
+
+  <!-- Client Auth Logic -->
+  <script>
+    const API_URL = window.location.origin;
+
+    // View Switching
+    const loginView = document.getElementById('login-view');
+    const registerView = document.getElementById('register-view');
+    const forgotView = document.getElementById('forgot-view');
+
+    document.getElementById('go-register').onclick = (e) => { e.preventDefault(); showView(registerView); };
+    document.getElementById('go-forgot').onclick = (e) => { e.preventDefault(); showView(forgotView); };
+    document.getElementById('reg-go-login').onclick = (e) => { e.preventDefault(); showView(loginView); };
+    document.getElementById('forgot-go-login').onclick = (e) => { e.preventDefault(); showView(loginView); };
+
+    function showView(view) {
+      loginView.style.display = 'none';
+      registerView.style.display = 'none';
+      forgotView.style.display = 'none';
+      view.style.display = 'block';
+    }
+
+    // Alerts helper
+    function alertMsg(text, type = 'success') {
+      const container = document.getElementById('alert-container');
+      const alert = document.createElement('div');
+      alert.className = `alert-popup ${type}`;
+      alert.innerHTML = text;
+      container.appendChild(alert);
+      setTimeout(() => alert.remove(), 4000);
+    }
+
+    // Ping check to detect backend server status
+    let isBackendOffline = false;
+    fetch(`${API_URL}/api/health`)
+      .then(res => res.json())
+      .catch(() => {
+        isBackendOffline = true;
+        console.warn('Backend is offline. Running index in LocalStorage mock mode.');
+      });
+
+    // Check if token already exists
+    if (localStorage.getItem('ht_token') || localStorage.getItem('ht_offline_user')) {
+      window.location.href = 'dashboard.html';
+    }
+
+    // Login Form Submit
+    document.getElementById('login-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+
+      if (isBackendOffline) {
+        // LocalStorage Fallback
+        const users = JSON.parse(localStorage.getItem('ht_mock_users') || '[]');
+        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+        
+        if (user && password === user.password) {
+          localStorage.setItem('ht_offline_user', JSON.stringify(user));
+          alertMsg('Offline Login Successful! Redirecting...', 'success');
+          setTimeout(() => window.location.href = 'dashboard.html', 1000);
+        } else {
+          alertMsg('Invalid mock email or password!', 'error');
+        }
+      } else {
+        // Backend Login
+        try {
+          const res = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (data.success) {
+            localStorage.setItem('ht_token', data.token);
+            alertMsg('Login successful! Redirecting...', 'success');
+            setTimeout(() => window.location.href = 'dashboard.html', 1000);
+          } else {
+            alertMsg(data.message || 'Login failed!', 'error');
+          }
+        } catch (err) {
+          alertMsg('Connection failed, login cannot complete.', 'error');
+        }
+      }
+    };
+
+    // Register Form Submit
+    document.getElementById('register-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value;
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+
+      if (isBackendOffline) {
+        // LocalStorage Mock Registration
+        const users = JSON.parse(localStorage.getItem('ht_mock_users') || '[]');
+        if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+          return alertMsg('User already exists in offline storage!', 'error');
+        }
+
+        const newUser = {
+          _id: 'mock_' + Math.random().toString(36).substr(2, 9),
+          name,
+          email: email.toLowerCase(),
+          password, // stored plain for mock simulation purposes
+          gender: 'Male',
+          age: 25,
+          weight: 70,
+          height: 170,
+          activityLevel: 'Moderately Active',
+          goal: 'Maintain Weight',
+          monthlyBudget: 200,
+          hostelMode: false,
+          challenges: { water: false, steps: false, noSugar: false, protein: false, streak: 0, lastUpdated: '' },
+          achievements: [],
+          createdAt: new Date().toISOString()
+        };
+        users.push(newUser);
+        localStorage.setItem('ht_mock_users', JSON.stringify(users));
+        localStorage.setItem('ht_offline_user', JSON.stringify(newUser));
+
+        alertMsg('Offline Account Registered! Redirecting...', 'success');
+        setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      } else {
+        // Backend Registration
+        try {
+          const res = await fetch(`${API_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+          });
+          const data = await res.json();
+          if (data.success) {
+            localStorage.setItem('ht_token', data.token);
+            alertMsg('Registration successful! Redirecting...', 'success');
+            setTimeout(() => window.location.href = 'dashboard.html', 1000);
+          } else {
+            alertMsg(data.message || 'Registration failed!', 'error');
+          }
+        } catch (err) {
+          alertMsg('Registration request error.', 'error');
+        }
+      }
+    };
+
+    // Forgot Password Form Submit
+    document.getElementById('forgot-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('forgot-email').value;
+
+      if (isBackendOffline) {
+        alertMsg('Simulating recovery instructions sent to offline inbox!', 'info');
+        setTimeout(() => showView(loginView), 1500);
+      } else {
+        try {
+          const res = await fetch(`${API_URL}/api/auth/forgot`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          const data = await res.json();
+          alertMsg(data.message || 'Recovery email sent.', data.success ? 'success' : 'error');
+          if (data.success) {
+            setTimeout(() => showView(loginView), 1500);
+          }
+        } catch (err) {
+          alertMsg('Forgot password error.', 'error');
+        }
+      }
+    };
+  </script>
+</body>
+</html>

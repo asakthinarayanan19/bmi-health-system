@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Health Twin - SaaS Dashboard Portal</title>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Animated Gradient Background Spheres -->
+  <div class="gradient-bg no-print">
+    <div class="gradient-sphere-1"></div>
+    <div class="gradient-sphere-2"></div>
+    <div class="gradient-sphere-3"></div>
+  </div>
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Left Navigation -->
+    <aside class="sidebar no-print" id="dashboard-sidebar">
+      <div class="sidebar-logo">
+        <i class="fa-solid fa-child-reaching"></i>
+        <span>HEALTH TWIN</span>
+      </div>
+      
+      <ul class="sidebar-menu">
+        <li><a class="menu-item active" data-tab="dashboard"><i class="fa-solid fa-chart-line"></i><span>Overview Dashboard</span></a></li>
+        <li><a class="menu-item" data-tab="assessment"><i class="fa-solid fa-file-medical"></i><span>New Assessment</span></a></li>
+        <li><a class="menu-item" data-tab="meals"><i class="fa-solid fa-utensils"></i><span>Nutrition Planner</span></a></li>
+        <li><a class="menu-item" data-tab="deficiencies"><i class="fa-solid fa-stethoscope"></i><span>Risks & Symptoms</span></a></li>
+        <li><a class="menu-item" data-tab="challenges"><i class="fa-solid fa-trophy"></i><span>Daily Challenges</span></a></li>
+        <li><a class="menu-item" data-tab="reports"><i class="fa-solid fa-passport"></i><span>Passport & PDF</span></a></li>
+        <li><a class="menu-item" data-tab="profile"><i class="fa-solid fa-user-gear"></i><span>My Profile</span></a></li>
+        <li id="admin-sidebar-item" style="display: none;"><a class="menu-item" data-tab="admin"><i class="fa-solid fa-user-shield"></i><span>Admin Panel</span></a></li>
+        <li><a class="menu-item" data-tab="contact"><i class="fa-solid fa-comment-dots"></i><span>Contact & Feedback</span></a></li>
+      </ul>
+      
+      <div class="sidebar-footer">
+        <a class="menu-item" id="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Log Out</span></a>
+      </div>
+    </aside>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+      
+      <!-- Top control bar -->
+      <header class="top-bar no-print">
+        <div class="top-bar-left">
+          <button class="btn-icon sidebar-toggle-btn" id="mobile-toggle"><i class="fa-solid fa-bars"></i></button>
+          <h2 id="page-title">Overview Dashboard</h2>
+        </div>
+        
+        <div class="top-controls">
+          <!-- Light/Dark Mode Switcher -->
+          <button class="btn-icon" id="theme-toggle" title="Toggle Light/Dark Theme"><i class="fa-solid fa-moon"></i></button>
+          
+          <!-- Online/Offline Badge -->
+          <div class="status-badge">
+            <span class="status-dot online" id="status-dot"></span>
+            <span id="status-text">Online Mode</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==============================================
+           TAB PANEL: OVERVIEW DASHBOARD
+      =============================================== -->
+      <section class="tab-panel active" id="tab-dashboard">
+        <!-- Top KPI Overview Widgets -->
+        <div class="dashboard-grid" style="margin-bottom: 24px;">
+          <!-- KPI 1 -->
+          <div class="col-3 glass-card kpi-card">
+            <div class="kpi-details">
+              <h4>Current BMI</h4>
+              <span class="counter" id="kpi-bmi">--</span>
+              <span class="unit" id="kpi-bmi-lbl">Normal</span>
+            </div>
+            <div class="kpi-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+          </div>
+          <!-- KPI 2 -->
+          <div class="col-3 glass-card kpi-card">
+            <div class="kpi-details">
+              <h4>Daily Calorie Goal</h4>
+              <span class="counter" id="kpi-calories">--</span>
+              <span class="unit">kcal</span>
+            </div>
+            <div class="kpi-icon"><i class="fa-solid fa-fire"></i></div>
+          </div>
+          <!-- KPI 3 -->
+          <div class="col-3 glass-card kpi-card">
+            <div class="kpi-details">
+              <h4>Health Index</h4>
+              <span class="counter" id="kpi-health-score">--</span>
+              <span class="unit">/ 100</span>
+            </div>
+            <div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          </div>
+          <!-- KPI 4 -->
+          <div class="col-3 glass-card kpi-card">
+            <div class="kpi-details">
+              <h4>Biological Age</h4>
+              <span class="counter" id="kpi-bio-age">--</span>
+              <span class="unit" id="kpi-actual-age">yrs</span>
+            </div>
+            <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Digital Health Twin (Interactive Silhouette) -->
+          <div class="col-4 glass-card">
+            <h3>Digital Health Twin</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">Visual glowing avatar maps assessment data</p>
+            
+            <div class="health-twin-box normal" id="twin-box">
+              <div class="twin-svg-container">
+                <!-- Human Outline Silhouette SVG -->
+                <svg viewBox="0 0 100 240" class="twin-svg">
+                  <!-- Silhouette Path -->
+                  <path class="twin-body" d="M 50,20 C 56,20 60,25 60,30 C 60,35 56,40 50,40 C 44,40 40,35 40,30 C 40,25 44,20 50,20 Z 
+                           M 48,42 C 40,43 32,48 30,55 C 28,62 26,75 25,95 C 24,105 24,120 25,130 C 26,133 30,133 30,130 C 29,120 29,105 30,95 C 31,90 32,70 33,65 C 34,63 36,63 36,65 L 36,130 C 36,140 37,150 37,165 L 35,215 C 34,225 35,230 38,230 C 41,230 42,225 42,215 L 45,165 L 48,165 L 48,225 C 48,228 52,228 52,225 L 52,165 L 55,165 L 58,215 C 58,225 59,230 62,230 C 65,230 66,225 65,215 L 63,165 C 63,150 64,140 64,130 L 64,65 C 64,63 66,63 67,65 C 68,70 69,90 70,95 C 71,105 71,120 70,130 C 70,133 74,133 74,130 C 75,120 75,105 74,95 C 73,75 71,62 69,55 C 67,48 59,43 51,42 Z" />
+                </svg>
+              </div>
+              <div class="twin-metrics tm-1" id="twin-bmi-overlay">BMI: --</div>
+              <div class="twin-metrics tm-2" id="twin-fat-overlay">Fat: --%</div>
+              <div class="twin-metrics tm-3" id="twin-lbm-overlay">LBM: --kg</div>
+            </div>
+          </div>
+
+          <!-- Personal Health Index Gauge (PHI) -->
+          <div class="col-4 glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3>Health Index (PHI)</h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">Composite score of parameters and habits</p>
+            </div>
+            
+            <div class="gauge-wrapper">
+              <svg class="gauge-svg">
+                <defs>
+                  <linearGradient id="phi-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="var(--primary)" />
+                    <stop offset="100%" stop-color="var(--secondary)" />
+                  </linearGradient>
+                </defs>
+                <circle class="gauge-bg" cx="80" cy="80" r="70" />
+                <circle class="gauge-fill" id="phi-gauge-circle" cx="80" cy="80" r="70" />
+              </svg>
+              <div class="gauge-text">
+                <div class="gauge-val" id="phi-gauge-val">0</div>
+                <div class="gauge-lbl">EXCELLENT</div>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted); text-align: center;">
+              Maintained via hydration levels, dietary consistency, and matching ideal weight standards.
+            </div>
+          </div>
+
+          <!-- Wellness Radar Chart -->
+          <div class="col-4 glass-card">
+            <h3>Wellness Breakdown</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Biometric strength indicators</p>
+            <div style="height: 250px; position: relative;">
+              <canvas id="radarChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid" style="margin-top: 20px;">
+          <!-- Future Health Simulator Projections -->
+          <div class="col-8 glass-card">
+            <h3>Weight Projection Simulator</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Simulated health progress roadmap based on caloric compliance</p>
+            <div style="height: 280px; position: relative;">
+              <canvas id="simulatorChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Nutrition Macro Rings & Water -->
+          <div class="col-4 glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <h3>Target Macronutrients</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Daily nutrition requirements breakdown</p>
+            
+            <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; height: 160px; position: relative;">
+              <canvas id="macroChart"></canvas>
+            </div>
+
+            <div style="display: flex; justify-content: space-around; margin-top: 15px; text-align: center; font-size: 0.85rem;">
+              <div>
+                <span style="display: inline-block; width: 10px; height: 10px; background-color: var(--primary); border-radius: 50%; margin-right: 4px;"></span>
+                <span id="macro-p-val">--g</span><div style="color: var(--text-muted);">Protein</div>
+              </div>
+              <div>
+                <span style="display: inline-block; width: 10px; height: 10px; background-color: var(--secondary); border-radius: 50%; margin-right: 4px;"></span>
+                <span id="macro-c-val">--g</span><div style="color: var(--text-muted);">Carbs</div>
+              </div>
+              <div>
+                <span style="display: inline-block; width: 10px; height: 10px; background-color: var(--accent); border-radius: 50%; margin-right: 4px;"></span>
+                <span id="macro-f-val">--g</span><div style="color: var(--text-muted);">Fats</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TAB PANEL: HEALTH ASSESSMENT FORM
+      =============================================== -->
+      <section class="tab-panel" id="tab-assessment">
+        <div class="dashboard-grid">
+          <div class="col-8 glass-card">
+            <h3>Biometric Assessment Form</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">Complete bio-profile parameters to compute medical metrics</p>
+            
+            <form id="assessment-form">
+              <div class="assessment-form-grid">
+                <div class="form-group">
+                  <label for="assess-name">Full Name</label>
+                  <input type="text" id="assess-name" class="form-input" style="padding-left: 15px;" required>
+                </div>
+                <div class="form-group">
+                  <label for="assess-gender">Gender</label>
+                  <select id="assess-gender" class="form-select">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="assess-age">Age (years)</label>
+                  <input type="number" id="assess-age" min="15" max="100" class="form-input" style="padding-left: 15px;" required>
+                </div>
+              </div>
+
+              <div class="assessment-form-grid">
+                <div class="form-group">
+                  <label for="assess-weight">Weight (kg)</label>
+                  <input type="number" id="assess-weight" step="0.1" class="form-input" style="padding-left: 15px;" required>
+                </div>
+                <div class="form-group">
+                  <label for="assess-height">Height (cm)</label>
+                  <input type="number" id="assess-height" class="form-input" style="padding-left: 15px;" required>
+                </div>
+                <div class="form-group">
+                  <label for="assess-activity">Activity Level</label>
+                  <select id="assess-activity" class="form-select">
+                    <option value="Sedentary">Sedentary (Little/no exercise)</option>
+                    <option value="Lightly Active">Lightly Active (1-3 days/week)</option>
+                    <option value="Moderately Active">Moderately Active (3-5 days/week)</option>
+                    <option value="Very Active">Very Active (6-7 days/week)</option>
+                    <option value="Athlete">Athlete (Heavy training, twice/day)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="assessment-form-grid">
+                <div class="form-group">
+                  <label for="assess-goal">Your Target Goal</label>
+                  <select id="assess-goal" class="form-select">
+                    <option value="Weight Loss">Weight Loss (Caloric Deficit)</option>
+                    <option value="Maintain Weight">Maintain Weight (Caloric Balance)</option>
+                    <option value="Weight Gain">Weight Gain (Caloric Surplus)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary" style="margin-top: 10px;">
+                <span>Calculate & Save Metrics</span>
+                <i class="fa-solid fa-calculator"></i>
+              </button>
+            </form>
+          </div>
+
+          <!-- Assessment calculations outputs -->
+          <div class="col-4 glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <h3>Calculated Biometrics</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Latest diagnostic computations</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
+                <span class="text-muted">Body Mass Index (BMI):</span>
+                <span id="calc-bmi" style="font-weight: 600;">--</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
+                <span class="text-muted">BMI Category:</span>
+                <span id="calc-bmi-cat" style="font-weight: 600;">--</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
+                <span class="text-muted">Basal Metabolic Rate (BMR):</span>
+                <span id="calc-bmr" style="font-weight: 600;">-- kcal</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
+                <span class="text-muted">TDEE Calories:</span>
+                <span id="calc-tdee" style="font-weight: 600;">-- kcal</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
+                <span class="text-muted">Body Fat Percentage:</span>
+                <span id="calc-fat" style="font-weight: 600;">-- %</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
+                <span class="text-muted">Lean Body Mass:</span>
+                <span id="calc-lbm" style="font-weight: 600;">-- kg</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
+                <span class="text-muted">Daily Water Requirement:</span>
+                <span id="calc-water" style="font-weight: 600;">-- L</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">
+                <span class="text-muted">Ideal Body Weight:</span>
+                <span id="calc-ideal-wt" style="font-weight: 600;">-- kg</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span class="text-muted">Weight Difference:</span>
+                <span id="calc-wt-diff" style="font-weight: 600;">--</span>
+              </div>
+            </div>
+            
+            <div style="background: rgba(0,212,255,0.05); padding: 12px; border-radius: 8px; font-size: 0.8rem; color: var(--text-muted); border: 1px solid var(--primary-glow); margin-top: 15px;">
+              <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 5px;"></i>
+              Updating this form recalculates and saves your history.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TAB PANEL: NUTRITION PLANNER & SWAPS
+      =============================================== -->
+      <section class="tab-panel" id="tab-meals">
+        <div class="dashboard-grid">
+          <!-- Budget and Options Selector -->
+          <div class="col-4 glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3>Planner Options</h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">Personalize diet budget and parameters</p>
+              
+              <!-- Hostel Student Mode Switch -->
+              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 16px; border-radius: 12px; margin-bottom: 18px;">
+                <div>
+                  <h4 style="font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-hotel" style="color: var(--primary);"></i>
+                    Hostel Student Mode
+                  </h4>
+                  <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Generates low-budget alternatives</p>
+                </div>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="hostel-mode-toggle">
+                  <span class="checkmark"></span>
+                </label>
+              </div>
+
+              <!-- Nutrition Budget Planner -->
+              <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 16px; border-radius: 12px;">
+                <h4 style="font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                  <i class="fa-solid fa-wallet" style="color: var(--accent);"></i>
+                  Nutrition Budget Planner
+                </h4>
+                <div class="form-group" style="margin-bottom: 12px;">
+                  <label for="monthly-budget">Monthly Food Budget ($)</label>
+                  <input type="number" id="monthly-budget" class="form-input" style="padding-left: 15px;" value="200">
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span>Daily Limit:</span> <strong id="budget-daily" style="color: var(--text-main);">$0.00</strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span>Weekly Limit:</span> <strong id="budget-weekly" style="color: var(--text-main);">$0.00</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-primary" id="btn-generate-grocery" style="margin-top: 20px;">
+              <span>Generate Grocery List</span>
+              <i class="fa-solid fa-basket-shopping"></i>
+            </button>
+          </div>
+
+          <!-- Meal Plan Generator Outputs -->
+          <div class="col-8 glass-card">
+            <h3 id="meal-plan-title">Generated Daily Meal Plan</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">Caloric-matched meals customized to parameters</p>
+            
+            <div class="dashboard-grid">
+              <!-- Breakfast -->
+              <div class="col-6 glass-card" style="padding: 16px;">
+                <h4 style="color: var(--primary); font-size: 1rem; margin-bottom: 8px;"><i class="fa-solid fa-egg"></i> Breakfast</h4>
+                <div id="meal-breakfast-items" style="font-size: 0.85rem; line-height: 1.4;">Generate an assessment first.</div>
+              </div>
+              <!-- Lunch -->
+              <div class="col-6 glass-card" style="padding: 16px;">
+                <h4 style="color: var(--secondary); font-size: 1rem; margin-bottom: 8px;"><i class="fa-solid fa-bowl-food"></i> Lunch</h4>
+                <div id="meal-lunch-items" style="font-size: 0.85rem; line-height: 1.4;">Generate an assessment first.</div>
+              </div>
+              <!-- Dinner -->
+              <div class="col-6 glass-card" style="padding: 16px;">
+                <h4 style="color: var(--accent); font-size: 1rem; margin-bottom: 8px;"><i class="fa-solid fa-fish"></i> Dinner</h4>
+                <div id="meal-dinner-items" style="font-size: 0.85rem; line-height: 1.4;">Generate an assessment first.</div>
+              </div>
+              <!-- Snacks -->
+              <div class="col-6 glass-card" style="padding: 16px;">
+                <h4 style="color: var(--warning); font-size: 1rem; margin-bottom: 8px;"><i class="fa-solid fa-cookie-bite"></i> Snacks</h4>
+                <div id="meal-snack-items" style="font-size: 0.85rem; line-height: 1.4;">Generate an assessment first.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid" style="margin-top: 20px;">
+          <!-- Grocery List Display Card -->
+          <div class="col-6 glass-card">
+            <h3>Grocery List Aggregator</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Smart aggregate ingredients required for the plan</p>
+            <div id="grocery-list-container" style="font-size: 0.9rem; max-height: 250px; overflow-y: auto;">
+              <p class="text-muted">Click "Generate Grocery List" to load ingredients checklist.</p>
+            </div>
+          </div>
+
+          <!-- AI Healthy Food Swap Engine -->
+          <div class="col-6 glass-card">
+            <h3>AI Healthy Food Swap Engine</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Find healthy alternatives for high-calorie cravings</p>
+            
+            <div class="form-group">
+              <div class="input-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="swap-search" class="form-input" placeholder="Search junk food (e.g. pizza, burger, soda)...">
+              </div>
+            </div>
+
+            <div id="swaps-results-list" style="margin-top: 15px;">
+              <!-- Swaps are populated here -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TAB PANEL: DEFICIENCY DETECTOR & RISKS
+      =============================================== -->
+      <section class="tab-panel" id="tab-deficiencies">
+        <div class="dashboard-grid">
+          <!-- Deficiency Symptom Checker Form -->
+          <div class="col-6 glass-card">
+            <h3>Symptom Deficiency Checker</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Check daily physiological symptoms to predict deficiencies</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+              <label class="challenge-item" style="margin: 0; padding: 10px 14px; cursor: pointer;">
+                <span>Fatigue / Low Energy</span>
+                <input type="checkbox" class="symptom-check" value="fatigue">
+              </label>
+              <label class="challenge-item" style="margin: 0; padding: 10px 14px; cursor: pointer;">
+                <span>Muscle Weakness</span>
+                <input type="checkbox" class="symptom-check" value="weakness">
+              </label>
+              <label class="challenge-item" style="margin: 0; padding: 10px 14px; cursor: pointer;">
+                <span>Hair Loss / Brittle Nails</span>
+                <input type="checkbox" class="symptom-check" value="hair">
+              </label>
+              <label class="challenge-item" style="margin: 0; padding: 10px 14px; cursor: pointer;">
+                <span>Muscle Cramping</span>
+                <input type="checkbox" class="symptom-check" value="cramps">
+              </label>
+              <label class="challenge-item" style="margin: 0; padding: 10px 14px; cursor: pointer;">
+                <span>Bone / Joint Aches</span>
+                <input type="checkbox" class="symptom-check" value="aches">
+              </label>
+              <label class="challenge-item" style="margin: 0; padding: 10px 14px; cursor: pointer;">
+                <span>Dry Skin / Eczema</span>
+                <input type="checkbox" class="symptom-check" value="skin">
+              </label>
+            </div>
+
+            <button class="btn-primary" id="btn-detect-deficiencies">
+              <span>Run Detector Diagnostics</span>
+              <i class="fa-solid fa-microscope"></i>
+            </button>
+
+            <!-- Disclaimer -->
+            <div style="background: rgba(255,75,114,0.05); border: 1px solid var(--danger); border-radius: 8px; padding: 12px; font-size: 0.75rem; color: var(--danger); margin-top: 15px; line-height: 1.4;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <strong>MEDICAL DISCLAIMER:</strong> Predictions are simulated estimations. Consult a physician for diagnostic bloodwork tests.
+            </div>
+          </div>
+
+          <!-- Diagnostics Outputs -->
+          <div class="col-6 glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3>Health Twin Diagnostics</h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Automated assessment risk evaluations</p>
+              
+              <!-- Health Risk Panel -->
+              <div style="margin-bottom: 20px;">
+                <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--primary);">Biometric Health Risk Profile</h4>
+                <div id="risk-analyzer-result" style="font-size: 0.85rem; line-height: 1.4;">
+                  Please complete a biometric assessment first to evaluate risks.
+                </div>
+              </div>
+
+              <!-- Detector outputs -->
+              <div>
+                <h4 style="font-size: 0.95rem; margin-bottom: 10px; color: var(--accent);">Identified Nutrient Deficiencies</h4>
+                <div id="deficiency-detector-result" style="font-size: 0.85rem; line-height: 1.4;">
+                  Select check-boxes on symptoms and run analysis.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TAB PANEL: DAILY CHALLENGES & BADGES
+      =============================================== -->
+      <section class="tab-panel" id="tab-challenges">
+        <div class="dashboard-grid">
+          <!-- Streaks and challenges -->
+          <div class="col-6 glass-card">
+            <h3>Active Daily Challenges</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Complete daily habits to increase your Health Index</p>
+            
+            <div style="background: rgba(255, 255, 255, 0.02); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+              <div>
+                <h4 style="font-size: 0.95rem;">Current Streak</h4>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Days logging consistency</p>
+              </div>
+              <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-fire-flame-curved"></i>
+                <span id="streak-counter">0</span>
+              </div>
+            </div>
+
+            <!-- Daily checkbox list -->
+            <div id="challenges-list-container">
+              <!-- Water -->
+              <div class="challenge-item" id="challenge-water-card">
+                <div class="challenge-info">
+                  <h5>Water Intake Challenge</h5>
+                  <p id="challenge-water-text">Drink 3.0 Liters of water today</p>
+                </div>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="challenge-water" class="daily-check">
+                  <span class="checkmark"></span>
+                </label>
+              </div>
+
+              <!-- Steps -->
+              <div class="challenge-item" id="challenge-steps-card">
+                <div class="challenge-info">
+                  <h5>Walk / Step Challenge</h5>
+                  <p>Walk 10,000 steps today</p>
+                </div>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="challenge-steps" class="daily-check">
+                  <span class="checkmark"></span>
+                </label>
+              </div>
+
+              <!-- Sugar -->
+              <div class="challenge-item" id="challenge-sugar-card">
+                <div class="challenge-info">
+                  <h5>No Sugar Challenge</h5>
+                  <p>Avoid processed sugars today</p>
+                </div>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="challenge-sugar" class="daily-check">
+                  <span class="checkmark"></span>
+                </label>
+              </div>
+
+              <!-- Protein -->
+              <div class="challenge-item" id="challenge-protein-card">
+                <div class="challenge-info">
+                  <h5>Protein Goal Challenge</h5>
+                  <p id="challenge-protein-text">Hit 120g protein requirements</p>
+                </div>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="challenge-protein" class="daily-check">
+                  <span class="checkmark"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unlocked Achievements -->
+          <div class="col-6 glass-card">
+            <h3>Achievements & Badges</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Fulfill wellness habits to earn awards</p>
+            
+            <div class="badges-container">
+              <!-- Badge 1 -->
+              <div class="badge-item" id="badge-first_assessment">
+                <div class="badge-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                <div class="badge-title">First Assessment</div>
+                <div class="badge-desc">Biometrics logged</div>
+              </div>
+              <!-- Badge 2 -->
+              <div class="badge-item" id="badge-hydration_hero">
+                <div class="badge-icon"><i class="fa-solid fa-droplet"></i></div>
+                <div class="badge-title">Hydration Hero</div>
+                <div class="badge-desc">Drank 3.0L water</div>
+              </div>
+              <!-- Badge 3 -->
+              <div class="badge-item" id="badge-protein_master">
+                <div class="badge-icon"><i class="fa-solid fa-dna"></i></div>
+                <div class="badge-title">Protein Master</div>
+                <div class="badge-desc">High protein target</div>
+              </div>
+              <!-- Badge 4 -->
+              <div class="badge-item" id="badge-health_champion">
+                <div class="badge-icon"><i class="fa-solid fa-shield-heart"></i></div>
+                <div class="badge-title">Health Champion</div>
+                <div class="badge-desc">Index score &ge; 85</div>
+              </div>
+              <!-- Badge 5 -->
+              <div class="badge-item" id="badge-streak_30">
+                <div class="badge-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                <div class="badge-title">30 Day Streak</div>
+                <div class="badge-desc">Consistent log</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TAB PANEL: HEALTH PASSPORT & PDF REPORTS
+      =============================================== -->
+      <section class="tab-panel" id="tab-reports">
+        <div class="dashboard-grid">
+          <!-- Printable Health Passport -->
+          <div class="col-6">
+            <div class="passport-card" id="passport-element">
+              <div class="passport-header">
+                <h3>HEALTH PASSPORT</h3>
+                <div class="passport-chip"></div>
+              </div>
+              
+              <div class="passport-body">
+                <div class="passport-info">
+                  <div class="passport-field">
+                    <label>Full Name</label>
+                    <span id="passport-name">--</span>
+                  </div>
+                  <div class="passport-field">
+                    <label>Health Index</label>
+                    <span id="passport-score">--</span>
+                  </div>
+                  <div class="passport-field">
+                    <label>Biometric BMI</label>
+                    <span id="passport-bmi">--</span>
+                  </div>
+                  <div class="passport-field">
+                    <label>Biological Age</label>
+                    <span id="passport-bio-age">--</span>
+                  </div>
+                  <div class="passport-field">
+                    <label>BMR / TDEE</label>
+                    <span id="passport-tdee">-- kcal</span>
+                  </div>
+                  <div class="passport-field">
+                    <label>Target Goal</label>
+                    <span id="passport-goal">--</span>
+                  </div>
+                </div>
+                
+                <div class="passport-qr">
+                  <!-- Vector QR Code representation of profile verification -->
+                  <svg viewBox="0 0 100 100">
+                    <!-- Standard QR borders and simulated pixels -->
+                    <rect x="0" y="0" width="30" height="30" fill="#000" />
+                    <rect x="5" y="5" width="20" height="20" fill="#FFF" />
+                    <rect x="10" y="10" width="10" height="10" fill="#000" />
+                    
+                    <rect x="70" y="0" width="30" height="30" fill="#000" />
+                    <rect x="75" y="5" width="20" height="20" fill="#FFF" />
+                    <rect x="80" y="10" width="10" height="10" fill="#000" />
+                    
+                    <rect x="0" y="70" width="30" height="30" fill="#000" />
+                    <rect x="5" y="75" width="20" height="20" fill="#FFF" />
+                    <rect x="10" y="80" width="10" height="10" fill="#000" />
+                    
+                    <rect x="40" y="10" width="10" height="10" fill="#000" />
+                    <rect x="50" y="20" width="10" height="10" fill="#000" />
+                    <rect x="40" y="40" width="20" height="20" fill="#000" />
+                    <rect x="70" y="40" width="10" height="10" fill="#000" />
+                    <rect x="80" y="50" width="15" height="15" fill="#000" />
+                    <rect x="40" y="70" width="10" height="15" fill="#000" />
+                    <rect x="50" y="80" width="15" height="10" fill="#000" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            
+            <button class="btn-primary no-print" id="btn-print-passport" style="margin-top: 20px;">
+              <span>Download Health Passport</span>
+              <i class="fa-solid fa-download"></i>
+            </button>
+          </div>
+
+          <!-- PDF Medical Report -->
+          <div class="col-6 glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3>Virtual Nutritionist Report</h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">Generated consulting review based on biomarkers</p>
+              
+              <div id="nutritionist-report-text" style="font-size: 0.85rem; line-height: 1.5; height: 180px; overflow-y: auto; background: rgba(0,0,0,0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--glass-border); font-style: italic;">
+                Complete an assessment profile first to receive expert feedback.
+              </div>
+            </div>
+
+            <button class="btn-primary no-print" id="btn-print-report" style="margin-top: 20px;">
+              <span>Generate & Print PDF Report</span>
+              <i class="fa-solid fa-file-pdf"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Assessment Log Section -->
+        <div class="glass-card no-print" style="margin-top: 20px;">
+          <h3>Assessment History Logs</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Complete log records of biometric updates</p>
+          <div style="overflow-x: auto;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Weight</th>
+                  <th>Height</th>
+                  <th>BMI</th>
+                  <th>Body Fat</th>
+                  <th>Health Score</th>
+                  <th>Goal</th>
+                </tr>
+              </thead>
+              <tbody id="assessment-history-body">
+                <!-- Javascript fills table rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TAB PANEL: MY PROFILE
+      =============================================== -->
+      <section class="tab-panel" id="tab-profile">
+        <div class="dashboard-grid">
+          <div class="col-8 glass-card">
+            <h3>Profile Settings</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">Manage email, target variables, and client settings</p>
+            
+            <form id="profile-form">
+              <div class="assessment-form-grid">
+                <div class="form-group">
+                  <label for="prof-name">Name</label>
+                  <input type="text" id="prof-name" class="form-input" style="padding-left: 15px;" required>
+                </div>
+                <div class="form-group">
+                  <label for="prof-email">Email Address (Read-only)</label>
+                  <input type="email" id="prof-email" class="form-input" style="padding-left: 15px;" readonly>
+                </div>
+              </div>
+
+              <div class="assessment-form-grid">
+                <div class="form-group">
+                  <label for="prof-age">Age</label>
+                  <input type="number" id="prof-age" class="form-input" style="padding-left: 15px;" required>
+                </div>
+                <div class="form-group">
+                  <label for="prof-weight">Weight (kg)</label>
+                  <input type="number" id="prof-weight" step="0.1" class="form-input" style="padding-left: 15px;" required>
+                </div>
+                <div class="form-group">
+                  <label for="prof-height">Height (cm)</label>
+                  <input type="number" id="prof-height" class="form-input" style="padding-left: 15px;" required>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-primary">
+                <span>Update Account Information</span>
+                <i class="fa-solid fa-user-pen"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TAB PANEL: ADMIN DASHBOARD
+      =============================================== -->
+      <section class="tab-panel" id="tab-admin">
+        <div class="dashboard-grid" style="margin-bottom: 24px;">
+          <!-- KPI 1 -->
+          <div class="col-4 glass-card kpi-card">
+            <div class="kpi-details">
+              <h4>System Total Users</h4>
+              <span class="counter" id="admin-kpi-users">0</span>
+            </div>
+            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+          </div>
+          <!-- KPI 2 -->
+          <div class="col-4 glass-card kpi-card">
+            <div class="kpi-details">
+              <h4>Total Assessments</h4>
+              <span class="counter" id="admin-kpi-assess">0</span>
+            </div>
+            <div class="kpi-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+          </div>
+          <!-- KPI 3 -->
+          <div class="col-4 glass-card kpi-card">
+            <div class="kpi-details">
+              <h4>Contact Forms Received</h4>
+              <span class="counter" id="admin-kpi-contacts">0</span>
+            </div>
+            <div class="kpi-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="margin-bottom: 20px;">
+          <h3>Global User Accounts</h3>
+          <div style="overflow-x: auto; max-height: 250px;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Date Joined</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-list">
+                <!-- Javascript populates -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <h3>Customer Service Feedback Forms</h3>
+          <div style="overflow-x: auto; max-height: 250px;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Message</th>
+                  <th>Date Sent</th>
+                </tr>
+              </thead>
+              <tbody id="admin-feedback-list">
+                <!-- Javascript populates -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           TAB PANEL: CONTACT / FEEDBACK FORM
+      =============================================== -->
+      <section class="tab-panel" id="tab-contact">
+        <div class="dashboard-grid">
+          <div class="col-8 glass-card">
+            <h3>Submit Expert Query Feedback</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px;">Send comments or contact requests directly to our health-care experts</p>
+            
+            <form id="contact-form">
+              <div class="form-group">
+                <label for="contact-name">Your Name</label>
+                <input type="text" id="contact-name" class="form-input" style="padding-left: 15px;" required>
+              </div>
+              <div class="form-group">
+                <label for="contact-email">Email Address</label>
+                <input type="email" id="contact-email" class="form-input" style="padding-left: 15px;" required>
+              </div>
+              <div class="form-group">
+                <label for="contact-message">Consulting Inquiry / Comments</label>
+                <textarea id="contact-message" class="form-input" style="padding-left: 15px; height: 120px; font-family: inherit; resize: none;" placeholder="Write message..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary">
+                <span>Send Message</span>
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Notification Banner popup -->
+  <div id="alert-container"></div>
+
+  <!-- JS -->
+  <script src="app.js"></script>
+</body>
+</html>
