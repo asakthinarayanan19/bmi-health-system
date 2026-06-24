@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const dns = require('dns').promises;
 
 // Determine path for JSON fallback DB
 const DB_DIR = path.join(__dirname, 'data');
@@ -107,26 +108,169 @@ const ContactSchema = new mongoose.Schema({
 
 let UserModel, AssessmentModel, ContactModel;
 
+// Mask URI credentials for secure logging
+function maskUriCredentials(uri) {
+  if (!uri) return '';
+  try {
+    const parsed = new URL(uri);
+    if (parsed.password) {
+      parsed.password = '****';
+    }
+    return parsed.toString();
+  } catch (err) {
+    return uri.replace(/^(mongodb(?:\+srv)?:\/\/[^:]+:)[^@]+@/, '$1****@');
+  }
+}
+
+// Manually resolve DNS SRV records to build standard mongodb:// URI
+async function resolveSrvToStandardUri(srvUri) {
+  let parsed;
+  try {
+    parsed = new URL(srvUri);
+  } catch (err) {
+    throw new Error(`Failed to parse MongoDB connection URI: ${err.message}`);
+  }
+
+  if (parsed.protocol !== 'mongodb+srv:') {
+    throw new Error('Provided URI is not a mongodb+srv connection string');
+  }
+
+  const username = parsed.username ? decodeURIComponent(parsed.username) : '';
+  const password = parsed.password ? decodeURIComponent(parsed.password) : '';
+  const hostPart = parsed.hostname;
+  const dbName = parsed.pathname.substring(1);
+  const queryPart = parsed.search.substring(1);
+
+  const srvName = `_mongodb._tcp.${hostPart}`;
+  let srvRecords;
+
+  try {
+    console.log(`[DNS] Attempting SRV resolution via system DNS for: ${srvName}`);
+    srvRecords = await dns.resolveSrv(srvName);
+  } catch (err) {
+    console.warn(`[DNS] System DNS SRV resolution failed: ${err.message}. Retrying via public resolvers (8.8.8.8, 1.1.1.1)...`);
+    const resolver = new dns.Resolver();
+    resolver.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4', '1.0.0.1']);
+    srvRecords = await resolver.resolveSrv(srvName);
+  }
+
+  if (!srvRecords || srvRecords.length === 0) {
+    throw new Error(`No SRV records returned for ${srvName}`);
+  }
+
+  const hosts = srvRecords.map(r => `${r.name}:${r.port}`).join(',');
+  console.log(`[DNS] Resolved hosts from SRV: ${hosts}`);
+
+  let replicaSet = '';
+  let authSource = 'admin';
+  try {
+    let txtRecords;
+    try {
+      txtRecords = await dns.resolveTxt(hostPart);
+    } catch (err) {
+      const resolver = new dns.Resolver();
+      resolver.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4', '1.0.0.1']);
+      txtRecords = await resolver.resolveTxt(hostPart);
+    }
+
+    if (txtRecords && txtRecords.length > 0) {
+      const txtString = txtRecords[0].join('');
+      console.log(`[DNS] Resolved TXT options: ${txtString}`);
+      const params = new URLSearchParams(txtString);
+      if (params.has('replicaSet')) replicaSet = params.get('replicaSet');
+      if (params.has('authSource')) authSource = params.get('authSource');
+    }
+  } catch (err) {
+    console.warn(`[DNS] DNS TXT query failed, proceeding with default parameters: ${err.message}`);
+  }
+
+  const finalParams = new URLSearchParams(queryPart || '');
+  if (replicaSet && !finalParams.has('replicaSet')) {
+    finalParams.set('replicaSet', replicaSet);
+  }
+  if (!finalParams.has('authSource')) {
+    finalParams.set('authSource', authSource);
+  }
+  if (!finalParams.has('ssl') && !finalParams.has('tls')) {
+    finalParams.set('ssl', 'true');
+  }
+
+  const credentials = username && password ? `${encodeURIComponent(username)}:${encodeURIComponent(password)}@` : '';
+  const standardUri = `mongodb://${credentials}${hosts}/${dbName}?${finalParams.toString()}`;
+  return standardUri;
+}
+
+// Initialize models to handle Mongo queries
+function initializeModels() {
+  UserModel = mongoose.models.User || mongoose.model('User', UserSchema);
+  AssessmentModel = mongoose.models.Assessment || mongoose.model('Assessment', AssessmentSchema);
+  ContactModel = mongoose.models.Contact || mongoose.model('Contact', ContactSchema);
+}
+
+// Add Mongoose connection event listeners
+mongoose.connection.on('connected', () => {
+  console.log('[Mongoose] Event: connected - Successfully connected to the database.');
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('[Mongoose] Event: disconnected - Database connection lost.');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('[Mongoose] Event: error - Database connection error occurred:', err);
+});
+
 // Connection helper
 async function connectDb() {
   const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/bmi_health_twin';
-  console.log(`Connecting to MongoDB at: ${mongoUri}...`);
+  const isSrv = mongoUri.startsWith('mongodb+srv://');
+  
+  console.log(`[Database] Attempting connection. Type: ${isSrv ? 'SRV' : 'Non-SRV'}`);
+  console.log(`[Database] Connection String: ${maskUriCredentials(mongoUri)}`);
+
+  const connectionOptions = {
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000
+  };
+
   try {
-    // Set short timeout to quickly fail and drop to JSON mode if Mongo is unavailable
-    await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 3000,
-      connectTimeoutMS: 3000
-    });
-    console.log('Successfully connected to MongoDB Atlas / Local MongoDB!');
+    await mongoose.connect(mongoUri, connectionOptions);
+    console.log('[Database] Successfully connected to MongoDB Atlas / Local MongoDB!');
     dbType = 'mongodb';
-    UserModel = mongoose.model('User', UserSchema);
-    AssessmentModel = mongoose.model('Assessment', AssessmentSchema);
-    ContactModel = mongoose.model('Contact', ContactSchema);
+    initializeModels();
   } catch (err) {
+    console.error(`[Database] Primary MongoDB Connection Error: ${err.message}`);
+    
+    // Detect DNS SRV lookup failures
+    const isDnsSrvError = isSrv && (
+      err.syscall === 'querySrv' ||
+      err.code === 'ECONNREFUSED' ||
+      err.code === 'ENOTFOUND' ||
+      err.message.includes('querySrv') ||
+      err.message.includes('SRV')
+    );
+
+    if (isDnsSrvError) {
+      console.warn('[Database] DNS SRV lookup failed. Attempting fallback to standard mongodb:// connection string...');
+      try {
+        const standardUri = await resolveSrvToStandardUri(mongoUri);
+        console.log(`[Database] Fallback Connection String: ${maskUriCredentials(standardUri)}`);
+        
+        await mongoose.connect(standardUri, connectionOptions);
+        console.log('[Database] Successfully connected to MongoDB Atlas using fallback standard URI!');
+        dbType = 'mongodb';
+        initializeModels();
+        return;
+      } catch (fallbackErr) {
+        console.error(`[Database] Fallback MongoDB Connection Error: ${fallbackErr.message}`);
+      }
+    }
+
     console.warn('\n======================================================');
     console.warn('WARNING: MongoDB Connection Failed!');
     console.warn('Falling back to local JSON database at:', JSON_DB_PATH);
     console.warn('======================================================\n');
+
     dbType = 'json';
   }
 }
